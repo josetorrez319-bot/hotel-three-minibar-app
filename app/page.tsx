@@ -1,69 +1,355 @@
+"use client";
+
 import Image from "next/image";
+import { useState } from "react";
+import { supabase } from "../lib/supabase";
+const productos = [
+  "Semillas",
+  "Chips Coco",
+  "Chips Mango",
+  "Imperial",
+  "Bavaria",
+  "S. Pellegrino",
+  "Limonada",
+  "Cápsulas de Café",
+  "Café Descafeinado",
+  "Chocolates",
+  "Galleta",
+  "Vino Blanco",
+  "Vino Tinto",
+  "Kit Dental",
+  "Kit de Afeitar",
+  "Vanity Kit",
+  "Gorra de Baño",
+  "Esponja",
+];
+
+const villas = Array.from(
+  { length: 12 },
+  (_, index) => `Villa ${String(index + 1).padStart(2, "0")}`
+);
+
+type Item = {
+  producto: string;
+  cantidad: number;
+};
+
+type Reporte = {
+  fecha: string;
+  villa: string;
+  colaborador: string;
+  items: Item[];
+};
 
 export default function Home() {
+  const [vista, setVista] = useState<"registro" | "reportes">("registro");
+
+  const [fecha, setFecha] = useState(
+    new Date().toISOString().split("T")[0]
+  );
+
+  const [villa, setVilla] = useState("Villa 01");
+  const [colaborador, setColaborador] = useState("Katherine");
+  const [producto, setProducto] = useState("");
+  const [cantidad, setCantidad] = useState(1);
+
+  const [items, setItems] = useState<Item[]>([]);
+  const [reportes, setReportes] = useState<Reporte[]>([]);
+
+  function agregarProducto() {
+    if (!producto || cantidad < 1) return;
+
+    setItems([...items, { producto, cantidad }]);
+    setProducto("");
+    setCantidad(1);
+  }
+
+  function eliminarProducto(index: number) {
+    setItems(items.filter((_, i) => i !== index));
+  }
+
+async function guardarReporte() {
+  if (items.length === 0) return;
+
+  const { error } = await supabase.from("reportes").insert([
+    {
+      fecha,
+      villa,
+      colaborador,
+      productos: items,
+    },
+  ]);
+
+  if (error) {
+    console.error("Error al guardar:", error);
+    alert("No se pudo guardar el reporte.");
+    return;
+  }
+
+  const nuevoReporte: Reporte = {
+    fecha,
+    villa,
+    colaborador,
+    items: [...items],
+  };
+
+  setReportes([nuevoReporte, ...reportes]);
+  setItems([]);
+  setProducto("");
+  setCantidad(1);
+  setVista("reportes");
+}
+  
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+    <main className="min-h-screen bg-[#f6f5ef] px-4 py-6">
+      <div className="mx-auto w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-xl">
+
+        {/* ENCABEZADO */}
+        <header className="border-b border-[#c4932f] bg-[#f8f3e8] px-5 py-6">
+          <div className="flex items-center justify-center gap-5">
             <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
+              src="/logo.png"
+              alt="Hotel Three Sixty Ojochal"
+              width={120}
+              height={120}
+              className="h-auto w-[120px]"
+              priority
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+            <div className="h-24 w-px bg-[#c4932f]" />
+
+            <div className="flex items-center gap-3">
+              <div className="h-px w-7 bg-[#c4932f]" />
+
+              <h1 className="text-3xl font-medium tracking-[0.12em] text-[#0f4a37]">
+                MINIBAR
+              </h1>
+
+              <div className="h-px w-7 bg-[#c4932f]" />
+            </div>
+          </div>
+        </header>
+
+        {/* PESTAÑAS */}
+        <div className="grid grid-cols-2 border-b text-center text-sm font-medium">
+          <button
+            onClick={() => setVista("registro")}
+            className={`px-4 py-4 ${
+              vista === "registro"
+                ? "border-b-2 border-[#0f4a37] text-[#0f4a37]"
+                : "text-gray-500"
+            }`}
           >
-            Documentation
-          </a>
+            Nuevo registro
+          </button>
+
+          <button
+            onClick={() => setVista("reportes")}
+            className={`px-4 py-4 ${
+              vista === "reportes"
+                ? "border-b-2 border-[#0f4a37] text-[#0f4a37]"
+                : "text-gray-500"
+            }`}
+          >
+            Reportes
+          </button>
         </div>
-      </main>
-    </div>
+
+        {/* NUEVO REGISTRO */}
+        {vista === "registro" && (
+          <section className="space-y-5 p-5">
+
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-gray-800">
+                Fecha
+              </label>
+
+              <input
+                type="date"
+                value={fecha}
+                onChange={(e) => setFecha(e.target.value)}
+                className="w-full rounded-xl border border-gray-300 bg-white p-3"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-gray-800">
+                Villa
+              </label>
+
+              <select
+                value={villa}
+                onChange={(e) => setVilla(e.target.value)}
+                className="w-full rounded-xl border border-gray-300 bg-white p-3"
+              >
+                {villas.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-gray-800">
+                Colaborador
+              </label>
+
+              <select
+                value={colaborador}
+                onChange={(e) => setColaborador(e.target.value)}
+                className="w-full rounded-xl border border-gray-300 bg-white p-3"
+              >
+                <option value="Katherine">Katherine</option>
+                <option value="Laura">Laura</option>
+              </select>
+            </div>
+
+            <div className="grid grid-cols-[1fr_100px] gap-3">
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-gray-800">
+                  Producto
+                </label>
+
+                <select
+                  value={producto}
+                  onChange={(e) => setProducto(e.target.value)}
+                  className="w-full rounded-xl border border-gray-300 bg-white p-3"
+                >
+                  <option value="">Seleccionar</option>
+
+                  {productos.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-gray-800">
+                  Cantidad
+                </label>
+
+                <input
+                  type="number"
+                  min="1"
+                  value={cantidad}
+                  onChange={(e) => setCantidad(Number(e.target.value))}
+                  className="w-full rounded-xl border border-gray-300 p-3 text-center"
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={agregarProducto}
+              className="w-full rounded-xl border border-[#b88a2d] py-3 font-semibold text-[#0f4a37]"
+            >
+              + Agregar producto
+            </button>
+
+            {items.length > 0 && (
+              <div className="overflow-hidden rounded-2xl border border-gray-200">
+                <div className="border-b px-4 py-3">
+                  <h2 className="font-semibold text-[#0f4a37]">
+                    Productos agregados
+                  </h2>
+                </div>
+
+                {items.map((item, index) => (
+                  <div
+                    key={`${item.producto}-${index}`}
+                    className="flex items-center justify-between border-b px-4 py-3 last:border-b-0"
+                  >
+                    <span>{item.producto}</span>
+
+                    <div className="flex items-center gap-4">
+                      <span className="font-semibold">
+                        {item.cantidad}
+                      </span>
+
+                      <button
+                        onClick={() => eliminarProducto(index)}
+                        className="text-sm text-red-500"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <button
+              onClick={guardarReporte}
+              className="w-full rounded-xl bg-[#0f4a37] py-4 font-semibold text-white"
+            >
+              Guardar reporte
+            </button>
+          </section>
+        )}
+
+        {/* REPORTES */}
+        {vista === "reportes" && (
+          <section className="space-y-4 p-5">
+            <h2 className="text-xl font-bold text-[#0f4a37]">
+              Reportes
+            </h2>
+
+            {reportes.length === 0 ? (
+              <div className="rounded-xl border p-4 text-center text-gray-500">
+                Aún no hay reportes guardados.
+              </div>
+            ) : (
+              reportes.map((reporte, index) => (
+                <div
+                  key={index}
+                  className="overflow-hidden rounded-2xl border border-gray-200"
+                >
+                  <div className="bg-[#f8f3e8] px-4 py-3">
+                    <div className="flex items-center justify-between">
+                      <strong className="text-[#0f4a37]">
+                        {reporte.villa}
+                      </strong>
+
+                      <span className="text-sm text-gray-600">
+                        {new Date(
+                          reporte.fecha + "T00:00:00"
+                        ).toLocaleDateString("es-CR")}
+                      </span>
+                    </div>
+
+                    <p className="mt-1 text-sm text-gray-500">
+                      {reporte.colaborador}
+                    </p>
+                  </div>
+
+                  <div>
+                    <div className="grid grid-cols-[1fr_80px] border-b px-4 py-2 text-sm font-semibold text-[#0f4a37]">
+                      <span>Producto</span>
+                      <span className="text-center">Cantidad</span>
+                    </div>
+
+                    {reporte.items.map((item, itemIndex) => (
+                      <div
+                        key={`${item.producto}-${itemIndex}`}
+                        className="grid grid-cols-[1fr_80px] border-b px-4 py-3 last:border-b-0"
+                      >
+                        <span>{item.producto}</span>
+
+                        <span className="text-center font-semibold">
+                          {item.cantidad}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))
+            )}
+          </section>
+        )}
+      </div>
+    </main>
   );
 }
