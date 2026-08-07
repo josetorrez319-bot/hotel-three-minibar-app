@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+
 const productos = [
   "Semillas",
   "Chips Coco",
@@ -56,6 +57,32 @@ export default function Home() {
   const [items, setItems] = useState<Item[]>([]);
   const [reportes, setReportes] = useState<Reporte[]>([]);
 
+  // CARGAR LOS REPORTES GUARDADOS EN SUPABASE
+  useEffect(() => {
+    async function cargarReportes() {
+      const { data, error } = await supabase
+        .from("reportes")
+        .select("fecha, villa, colaborador, productos, created_at")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error al cargar reportes:", error);
+        return;
+      }
+
+      const reportesCargados: Reporte[] = (data ?? []).map((reporte) => ({
+        fecha: reporte.fecha,
+        villa: reporte.villa,
+        colaborador: reporte.colaborador,
+        items: reporte.productos ?? [],
+      }));
+
+      setReportes(reportesCargados);
+    }
+
+    cargarReportes();
+  }, []);
+
   function agregarProducto() {
     if (!producto || cantidad < 1) return;
 
@@ -68,38 +95,37 @@ export default function Home() {
     setItems(items.filter((_, i) => i !== index));
   }
 
-async function guardarReporte() {
-  if (items.length === 0) return;
+  async function guardarReporte() {
+    if (items.length === 0) return;
 
-  const { error } = await supabase.from("reportes").insert([
-    {
+    const { error } = await supabase.from("reportes").insert([
+      {
+        fecha,
+        villa,
+        colaborador,
+        productos: items,
+      },
+    ]);
+
+    if (error) {
+      console.error("Error al guardar:", error);
+      alert("No se pudo guardar el reporte.");
+      return;
+    }
+
+    const nuevoReporte: Reporte = {
       fecha,
       villa,
       colaborador,
-      productos: items,
-    },
-  ]);
+      items: [...items],
+    };
 
-  if (error) {
-    console.error("Error al guardar:", error);
-    alert("No se pudo guardar el reporte.");
-    return;
+    setReportes((anteriores) => [nuevoReporte, ...anteriores]);
+    setItems([]);
+    setProducto("");
+    setCantidad(1);
+    setVista("reportes");
   }
-
-  const nuevoReporte: Reporte = {
-    fecha,
-    villa,
-    colaborador,
-    items: [...items],
-  };
-
-  setReportes([nuevoReporte, ...reportes]);
-  setItems([]);
-  setProducto("");
-  setCantidad(1);
-  setVista("reportes");
-}
-  
 
   return (
     <main className="min-h-screen bg-[#f6f5ef] px-4 py-6">
@@ -159,7 +185,6 @@ async function guardarReporte() {
         {/* NUEVO REGISTRO */}
         {vista === "registro" && (
           <section className="space-y-5 p-5">
-
             <div>
               <label className="mb-2 block text-sm font-semibold text-gray-800">
                 Fecha
