@@ -42,13 +42,18 @@ type Reporte = {
   items: Item[];
 };
 
+function fechaLocal(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
 export default function Home() {
   const [vista, setVista] = useState<"registro" | "reportes">("registro");
 
-  const [fecha, setFecha] = useState(
-    new Date().toISOString().split("T")[0]
-  );
-
+  const [fecha, setFecha] = useState(fechaLocal(new Date()));
   const [villa, setVilla] = useState("Villa 01");
   const [colaborador, setColaborador] = useState("Katherine");
   const [producto, setProducto] = useState("");
@@ -56,17 +61,30 @@ export default function Home() {
 
   const [items, setItems] = useState<Item[]>([]);
   const [reportes, setReportes] = useState<Reporte[]>([]);
+  const [cargando, setCargando] = useState(true);
 
-  // CARGAR LOS REPORTES GUARDADOS EN SUPABASE
   useEffect(() => {
     async function cargarReportes() {
+      setCargando(true);
+
+      const hoy = new Date();
+
+      const ayer = new Date();
+      ayer.setDate(hoy.getDate() - 1);
+
+      const fechaHoy = fechaLocal(hoy);
+      const fechaAyer = fechaLocal(ayer);
+
       const { data, error } = await supabase
         .from("reportes")
         .select("fecha, villa, colaborador, productos, created_at")
+        .gte("fecha", fechaAyer)
+        .lte("fecha", fechaHoy)
         .order("created_at", { ascending: false });
 
       if (error) {
         console.error("Error al cargar reportes:", error);
+        setCargando(false);
         return;
       }
 
@@ -78,6 +96,7 @@ export default function Home() {
       }));
 
       setReportes(reportesCargados);
+      setCargando(false);
     }
 
     cargarReportes();
@@ -113,6 +132,13 @@ export default function Home() {
       return;
     }
 
+    const hoy = fechaLocal(new Date());
+
+    const ayerDate = new Date();
+    ayerDate.setDate(ayerDate.getDate() - 1);
+
+    const ayer = fechaLocal(ayerDate);
+
     const nuevoReporte: Reporte = {
       fecha,
       villa,
@@ -120,7 +146,10 @@ export default function Home() {
       items: [...items],
     };
 
-    setReportes((anteriores) => [nuevoReporte, ...anteriores]);
+    if (fecha === hoy || fecha === ayer) {
+      setReportes((anteriores) => [nuevoReporte, ...anteriores]);
+    }
+
     setItems([]);
     setProducto("");
     setCantidad(1);
@@ -318,13 +347,23 @@ export default function Home() {
         {/* REPORTES */}
         {vista === "reportes" && (
           <section className="space-y-4 p-5">
-            <h2 className="text-xl font-bold text-[#0f4a37]">
-              Reportes
-            </h2>
+            <div>
+              <h2 className="text-xl font-bold text-[#0f4a37]">
+                Reportes
+              </h2>
 
-            {reportes.length === 0 ? (
+              <p className="mt-1 text-sm text-gray-500">
+                Historial de hoy y ayer
+              </p>
+            </div>
+
+            {cargando ? (
               <div className="rounded-xl border p-4 text-center text-gray-500">
-                Aún no hay reportes guardados.
+                Cargando reportes...
+              </div>
+            ) : reportes.length === 0 ? (
+              <div className="rounded-xl border p-4 text-center text-gray-500">
+                No hay reportes de hoy ni de ayer.
               </div>
             ) : (
               reportes.map((reporte, index) => (
