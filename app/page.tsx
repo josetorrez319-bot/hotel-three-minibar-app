@@ -43,13 +43,29 @@ type Reporte = {
   items: Item[];
 };
 
+function fechaLocal(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function mostrarFecha(fecha: string) {
+  if (!fecha) return "";
+
+  return new Date(fecha + "T00:00:00").toLocaleDateString("es-CR", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
 export default function Home() {
-  const [vista, setVista] = useState<"registro" | "reportes">("registro");
+  const [vista, setVista] =
+    useState<"registro" | "reportes">("registro");
 
-  const [fecha, setFecha] = useState(
-    new Date().toISOString().split("T")[0]
-  );
-
+  const [fecha, setFecha] = useState(fechaLocal(new Date()));
   const [villa, setVilla] = useState("Villa 01");
   const [colaborador, setColaborador] = useState("Katherine");
   const [producto, setProducto] = useState("");
@@ -60,18 +76,6 @@ export default function Home() {
   const [guardando, setGuardando] = useState(false);
   const [cargando, setCargando] = useState(false);
 
-  // =========================================================
-  // FECHAS DE HOY Y AYER
-  // =========================================================
-
-  function obtenerFechaLocal(fechaBase: Date) {
-    const year = fechaBase.getFullYear();
-    const month = String(fechaBase.getMonth() + 1).padStart(2, "0");
-    const day = String(fechaBase.getDate()).padStart(2, "0");
-
-    return `${year}-${month}-${day}`;
-  }
-
   function obtenerHoyYAyer() {
     const hoy = new Date();
 
@@ -79,14 +83,10 @@ export default function Home() {
     ayer.setDate(hoy.getDate() - 1);
 
     return {
-      hoy: obtenerFechaLocal(hoy),
-      ayer: obtenerFechaLocal(ayer),
+      hoy: fechaLocal(hoy),
+      ayer: fechaLocal(ayer),
     };
   }
-
-  // =========================================================
-  // CARGAR REPORTES DESDE SUPABASE
-  // =========================================================
 
   async function cargarReportes() {
     setCargando(true);
@@ -101,18 +101,20 @@ export default function Home() {
       .order("fecha", { ascending: false });
 
     if (error) {
-      console.error("Error cargando reportes:", error);
+      console.error("Error al cargar reportes:", error);
       setCargando(false);
       return;
     }
 
-    const reportesFormateados: Reporte[] = (data || []).map((reporte) => ({
-      id: reporte.id,
-      fecha: reporte.fecha,
-      villa: reporte.villa,
-      colaborador: reporte.colaborador,
-      items: reporte.productos || [],
-    }));
+    const reportesFormateados: Reporte[] = (data || []).map(
+      (reporte) => ({
+        id: reporte.id,
+        fecha: reporte.fecha,
+        villa: reporte.villa,
+        colaborador: reporte.colaborador,
+        items: reporte.productos || [],
+      })
+    );
 
     setReportes(reportesFormateados);
     setCargando(false);
@@ -121,10 +123,6 @@ export default function Home() {
   useEffect(() => {
     cargarReportes();
   }, []);
-
-  // =========================================================
-  // AGREGAR PRODUCTO
-  // =========================================================
 
   function agregarProducto() {
     if (!producto || cantidad < 1) return;
@@ -141,19 +139,11 @@ export default function Home() {
     setCantidad(1);
   }
 
-  // =========================================================
-  // ELIMINAR PRODUCTO
-  // =========================================================
-
   function eliminarProducto(index: number) {
     setItems((actuales) =>
       actuales.filter((_, itemIndex) => itemIndex !== index)
     );
   }
-
-  // =========================================================
-  // GUARDAR REPORTE EN SUPABASE
-  // =========================================================
 
   async function guardarReporte() {
     if (items.length === 0 || guardando) return;
@@ -186,10 +176,6 @@ export default function Home() {
     setGuardando(false);
   }
 
-  // =========================================================
-  // CAMBIAR PESTAÑA
-  // =========================================================
-
   async function abrirReportes() {
     setVista("reportes");
     await cargarReportes();
@@ -197,77 +183,56 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#f7f4ec]">
-      <div className="mx-auto w-full max-w-[820px] overflow-hidden bg-[#fffdf8] shadow-xl">
+      <div className="mx-auto min-h-screen w-full max-w-[820px] overflow-hidden bg-[#fffdf8] shadow-xl">
 
-        {/* ================================================= */}
         {/* ENCABEZADO */}
-        {/* ================================================= */}
-
-        <header className="relative overflow-hidden border-b border-[#c4932f] bg-[#f8f3e8] px-5 py-6">
-          {/* Decoración */}
+        <header className="relative overflow-hidden border-b border-[#c4932f] bg-[#f8f3e8] px-5 py-5">
           <div className="pointer-events-none absolute -right-12 -top-16 h-56 w-56 rounded-full border border-[#c4932f]/15" />
-          <div className="pointer-events-none absolute right-3 top-16 h-40 w-40 rounded-full border border-[#c4932f]/10" />
 
           <div className="relative flex items-center justify-center gap-5">
-
-            {/* LOGO */}
-
-            <div className="flex w-[115px] items-center justify-center">
+            <div className="flex w-[105px] items-center justify-center">
               <Image
                 src="/logo.png"
                 alt="Hotel Three Sixty Ojochal"
-                width={115}
-                height={115}
-                className="h-auto w-[105px] object-contain"
+                width={105}
+                height={105}
+                className="h-auto w-[95px] object-contain"
                 priority
               />
             </div>
 
-            {/* LÍNEA */}
-
-            <div className="h-28 w-px bg-[#c4932f]" />
-
-            {/* MINIBAR */}
+            <div className="h-24 w-px bg-[#c4932f]" />
 
             <div className="flex flex-1 flex-col items-center justify-center">
-
-              <div className="mb-3 flex items-center gap-3">
-                <div className="h-px w-10 bg-[#c4932f]" />
-
-                <span className="text-lg text-[#c4932f]">
-                  ✦
-                </span>
-
-                <div className="h-px w-10 bg-[#c4932f]" />
+              <div className="mb-2 flex items-center gap-3">
+                <div className="h-px w-8 bg-[#c4932f]" />
+                <span className="text-[#c4932f]">✦</span>
+                <div className="h-px w-8 bg-[#c4932f]" />
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="h-px w-7 bg-[#c4932f]" />
+              <div className="flex items-center justify-center gap-3">
+                <div className="h-px w-6 bg-[#c4932f]" />
 
-                <h1 className="text-[clamp(2rem,7vw,3.4rem)] font-medium tracking-[0.12em] text-[#174f3d]">
+                <h1 className="text-[clamp(1.8rem,7vw,3.2rem)] font-medium tracking-[0.12em] text-[#174f3d]">
                   MINIBAR
                 </h1>
 
-                <div className="h-px w-7 bg-[#c4932f]" />
+                <div className="h-px w-6 bg-[#c4932f]" />
               </div>
 
-              <p className="mt-2 text-center text-[11px] tracking-[0.32em] text-[#b9852c] sm:text-sm">
+              <p className="mt-2 text-center text-[9px] tracking-[0.3em] text-[#b9852c] sm:text-xs">
                 HOTEL THREE SIXTY
               </p>
             </div>
           </div>
         </header>
 
-        {/* ================================================= */}
         {/* PESTAÑAS */}
-        {/* ================================================= */}
-
         <div className="grid grid-cols-2 border-b border-[#ddd8ce] bg-white">
-
           <button
             type="button"
             onClick={() => setVista("registro")}
-            className={`relative px-3 py-4 text-base font-bold transition ${
+            className={`relative px-2 py-4 text-sm font-bold sm:text-base ${
               vista === "registro"
                 ? "text-[#174f3d]"
                 : "text-gray-500"
@@ -284,7 +249,7 @@ export default function Home() {
           <button
             type="button"
             onClick={abrirReportes}
-            className={`relative px-3 py-4 text-base font-bold transition ${
+            className={`relative px-2 py-4 text-sm font-bold sm:text-base ${
               vista === "reportes"
                 ? "text-[#174f3d]"
                 : "text-gray-500"
@@ -299,60 +264,51 @@ export default function Home() {
           </button>
         </div>
 
-        {/* ================================================= */}
         {/* NUEVO REGISTRO */}
-        {/* ================================================= */}
-
         {vista === "registro" && (
-          <section className="p-4 sm:p-5">
-
+          <section className="p-4">
             <div className="w-full overflow-hidden rounded-[28px] border border-[#e2ddd3] bg-white p-4 shadow-sm sm:p-5">
 
               {/* FECHA */}
-
-              <div className="w-full overflow-hidden">
-                <label className="mb-2 block text-sm font-bold text-[#174f3d] sm:text-base">
+              <div className="w-full">
+                <label className="mb-2 block text-sm font-bold text-[#174f3d]">
                   Fecha
                 </label>
 
-                <input
-                 type="date"
-                  value={fecha}
-                  onChange={(e) => setFecha(e.target.value)}
-                  className="
-                    block
-                    h-[54px]
-                    w-full
-                    min-w-0
-                    max-w-full
-                    box-border
-                    appearance-none
-                    rounded-2xl
-                    border
-                    border-[#d8d2c7]
-                    bg-[#fffdf9]
-                    px-4
-                    text-base
-                    text-gray-800
-                    outline-none
-                    focus:border-[#c4932f]
-                  "
-                />
+                <div className="relative h-[54px] w-full overflow-hidden rounded-2xl border border-[#d8d2c7] bg-[#fffdf9]">
+
+                  {/* FECHA CENTRADA */}
+                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-12 text-center text-base font-medium text-gray-900">
+                    {mostrarFecha(fecha)}
+                  </div>
+
+                  {/* ICONO */}
+                  <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-lg text-gray-600">
+                    ▣
+                  </div>
+
+                  {/* INPUT REAL INVISIBLE */}
+                  <input
+                    type="date"
+                    value={fecha}
+                    onChange={(e) => setFecha(e.target.value)}
+                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                    aria-label="Seleccionar fecha"
+                  />
+                </div>
               </div>
 
-              {/* VILLA + COLABORADOR */}
-
+              {/* VILLA Y COLABORADOR */}
               <div className="mt-4 grid grid-cols-2 gap-3">
-
                 <div className="min-w-0">
-                  <label className="mb-2 block text-sm font-bold text-[#174f3d] sm:text-base">
+                  <label className="mb-2 block text-sm font-bold text-[#174f3d]">
                     Villa
                   </label>
 
                   <select
                     value={villa}
                     onChange={(e) => setVilla(e.target.value)}
-                    className="h-[54px] w-full min-w-0 rounded-2xl border border-[#d8d2c7] bg-[#fffdf9] px-3 text-base outline-none focus:border-[#c4932f]"
+                    className="h-[54px] w-full rounded-2xl border border-[#d8d2c7] bg-[#fffdf9] px-3 text-center text-base outline-none"
                   >
                     {villas.map((item) => (
                       <option key={item} value={item}>
@@ -363,43 +319,34 @@ export default function Home() {
                 </div>
 
                 <div className="min-w-0">
-                  <label className="mb-2 block text-sm font-bold text-[#174f3d] sm:text-base">
+                  <label className="mb-2 block text-sm font-bold text-[#174f3d]">
                     Colaborador
                   </label>
 
                   <select
                     value={colaborador}
                     onChange={(e) => setColaborador(e.target.value)}
-                    className="h-[54px] w-full min-w-0 rounded-2xl border border-[#d8d2c7] bg-[#fffdf9] px-3 text-base outline-none focus:border-[#c4932f]"
+                    className="h-[54px] w-full rounded-2xl border border-[#d8d2c7] bg-[#fffdf9] px-3 text-center text-base outline-none"
                   >
-                    <option value="Katherine">
-                      Katherine
-                    </option>
-
-                    <option value="Laura">
-                      Laura
-                    </option>
+                    <option value="Katherine">Katherine</option>
+                    <option value="Laura">Laura</option>
                   </select>
                 </div>
               </div>
 
-              {/* PRODUCTO + CANTIDAD */}
-
+              {/* PRODUCTO Y CANTIDAD */}
               <div className="mt-4 grid grid-cols-[minmax(0,1fr)_105px] gap-3">
-
                 <div className="min-w-0">
-                  <label className="mb-2 block text-sm font-bold text-[#174f3d] sm:text-base">
+                  <label className="mb-2 block text-sm font-bold text-[#174f3d]">
                     Producto
                   </label>
 
                   <select
                     value={producto}
                     onChange={(e) => setProducto(e.target.value)}
-                    className="h-[54px] w-full min-w-0 rounded-2xl border border-[#d8d2c7] bg-[#fffdf9] px-3 text-base outline-none focus:border-[#c4932f]"
+                    className="h-[54px] w-full rounded-2xl border border-[#d8d2c7] bg-[#fffdf9] px-3 text-center text-base outline-none"
                   >
-                    <option value="">
-                      Seleccionar producto
-                    </option>
+                    <option value="">Seleccionar producto</option>
 
                     {productos.map((item) => (
                       <option key={item} value={item}>
@@ -410,12 +357,11 @@ export default function Home() {
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-bold text-[#174f3d] sm:text-base">
+                  <label className="mb-2 block text-center text-sm font-bold text-[#174f3d]">
                     Cantidad
                   </label>
 
-                  <div className="flex h-[54px] items-center justify-between rounded-2xl border border-[#d8d2c7] bg-[#fffdf9] px-2">
-
+                  <div className="grid h-[54px] grid-cols-3 items-center overflow-hidden rounded-2xl border border-[#d8d2c7] bg-[#fffdf9]">
                     <button
                       type="button"
                       onClick={() =>
@@ -423,12 +369,12 @@ export default function Home() {
                           Math.max(1, actual - 1)
                         )
                       }
-                      className="flex h-9 w-9 items-center justify-center text-2xl font-medium text-gray-500"
+                      className="flex h-full items-center justify-center text-xl text-gray-500"
                     >
                       −
                     </button>
 
-                    <span className="text-xl font-bold text-[#174f3d]">
+                    <span className="flex h-full items-center justify-center text-center text-lg font-bold text-[#174f3d]">
                       {cantidad}
                     </span>
 
@@ -437,7 +383,7 @@ export default function Home() {
                       onClick={() =>
                         setCantidad((actual) => actual + 1)
                       }
-                      className="flex h-9 w-9 items-center justify-center text-2xl font-medium text-gray-500"
+                      className="flex h-full items-center justify-center text-xl text-gray-500"
                     >
                       +
                     </button>
@@ -446,25 +392,21 @@ export default function Home() {
               </div>
 
               {/* AGREGAR PRODUCTO */}
-
               <button
                 type="button"
                 onClick={agregarProducto}
                 disabled={!producto}
-                className="mt-5 flex h-[58px] w-full items-center justify-center gap-2 rounded-2xl border-2 border-[#c4932f] bg-white text-base font-bold text-[#174f3d] transition active:scale-[0.99] disabled:opacity-50"
+                className="mt-5 flex h-[56px] w-full items-center justify-center gap-2 rounded-2xl border-2 border-[#c4932f] bg-white text-base font-bold text-[#174f3d] disabled:opacity-50"
               >
-                <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-[#174f3d] text-lg">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-[#174f3d]">
                   +
                 </span>
-
                 Agregar producto
               </button>
 
               {/* PRODUCTOS AGREGADOS */}
-
               {items.length > 0 && (
                 <div className="mt-4 overflow-hidden rounded-2xl border border-[#e2ddd3]">
-
                   <div className="bg-[#f8f3e8] px-4 py-3">
                     <h2 className="font-bold text-[#174f3d]">
                       Productos agregados
@@ -476,73 +418,43 @@ export default function Home() {
                       key={`${item.producto}-${index}`}
                       className="flex items-center justify-between border-t border-[#eee9df] px-4 py-3"
                     >
-                      <div>
-                        <p className="font-medium text-gray-800">
-                          {item.producto}
-                        </p>
+                      <span>{item.producto}</span>
 
-                        <p className="text-sm text-gray-500">
-                          Cantidad: {item.cantidad}
-                        </p>
+                      <div className="flex items-center gap-4">
+                        <span className="font-bold text-[#174f3d]">
+                          {item.cantidad}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => eliminarProducto(index)}
+                          className="text-sm font-semibold text-red-500"
+                        >
+                          Eliminar
+                        </button>
                       </div>
-
-                      <button
-                        type="button"
-                        onClick={() => eliminarProducto(index)}
-                        className="rounded-lg px-3 py-2 text-sm font-semibold text-red-500"
-                      >
-                        Eliminar
-                      </button>
                     </div>
                   ))}
                 </div>
               )}
 
-              {/* GUARDAR REPORTE */}
-
+              {/* GUARDAR */}
               <button
                 type="button"
                 onClick={guardarReporte}
                 disabled={items.length === 0 || guardando}
-                className="
-                  mt-5
-                  flex
-                  h-[60px]
-                  w-full
-                  items-center
-                  justify-center
-                  gap-2
-                  rounded-2xl
-                  border
-                  border-[#c4932f]
-                  bg-[#174f3d]
-                  text-lg
-                  font-bold
-                  text-white
-                  transition
-                  active:scale-[0.99]
-                  disabled:cursor-not-allowed
-                  disabled:bg-[#adc2ba]
-                  disabled:text-white
-                "
+                className="mt-5 flex h-[58px] w-full items-center justify-center gap-2 rounded-2xl border border-[#c4932f] bg-[#174f3d] text-base font-bold text-white disabled:bg-[#adc2ba]"
               >
                 <span>▣</span>
-
-                {guardando
-                  ? "Guardando..."
-                  : "Guardar reporte"}
+                {guardando ? "Guardando..." : "Guardar reporte"}
               </button>
             </div>
           </section>
         )}
 
-        {/* ================================================= */}
         {/* REPORTES */}
-        {/* ================================================= */}
-
         {vista === "reportes" && (
-          <section className="p-4 sm:p-5">
-
+          <section className="p-4">
             <div className="mb-4">
               <h2 className="text-xl font-bold text-[#174f3d]">
                 Reportes
@@ -554,28 +466,22 @@ export default function Home() {
             </div>
 
             {cargando ? (
-              <div className="rounded-2xl border border-[#e2ddd3] bg-white p-6 text-center text-gray-500">
+              <div className="rounded-2xl border bg-white p-6 text-center text-gray-500">
                 Cargando reportes...
               </div>
             ) : reportes.length === 0 ? (
-              <div className="rounded-2xl border border-[#e2ddd3] bg-white p-6 text-center text-gray-500">
+              <div className="rounded-2xl border bg-white p-6 text-center text-gray-500">
                 Aún no hay reportes de hoy o ayer.
               </div>
             ) : (
               <div className="space-y-4">
-
                 {reportes.map((reporte, index) => (
                   <div
                     key={reporte.id ?? index}
-                    className="overflow-hidden rounded-2xl border border-[#e2ddd3] bg-white shadow-sm"
+                    className="overflow-hidden rounded-2xl border border-[#e2ddd3] bg-white"
                   >
-
-                    {/* CABECERA REPORTE */}
-
                     <div className="bg-[#f8f3e8] px-4 py-3">
-
-                      <div className="flex items-center justify-between gap-3">
-
+                      <div className="flex items-center justify-between">
                         <strong className="text-[#174f3d]">
                           {reporte.villa}
                         </strong>
@@ -592,35 +498,23 @@ export default function Home() {
                       </p>
                     </div>
 
-                    {/* PRODUCTOS */}
+                    <div className="grid grid-cols-[1fr_85px] border-b px-4 py-2 text-sm font-bold text-[#174f3d]">
+                      <span>Producto</span>
+                      <span className="text-center">Cantidad</span>
+                    </div>
 
-                    <div>
+                    {reporte.items.map((item, itemIndex) => (
+                      <div
+                        key={`${item.producto}-${itemIndex}`}
+                        className="grid grid-cols-[1fr_85px] border-b px-4 py-3 last:border-b-0"
+                      >
+                        <span>{item.producto}</span>
 
-                      <div className="grid grid-cols-[1fr_85px] border-b border-[#174f3d] px-4 py-2 text-sm font-bold text-[#174f3d]">
-                        <span>Producto</span>
-
-                        <span className="text-center">
-                          Cantidad
+                        <span className="text-center font-bold">
+                          {item.cantidad}
                         </span>
                       </div>
-
-                      {reporte.items.map(
-                        (item, itemIndex) => (
-                          <div
-                            key={`${item.producto}-${itemIndex}`}
-                            className="grid grid-cols-[1fr_85px] border-b border-[#eee9df] px-4 py-3 last:border-b-0"
-                          >
-                            <span>
-                              {item.producto}
-                            </span>
-
-                            <span className="text-center font-bold">
-                              {item.cantidad}
-                            </span>
-                          </div>
-                        )
-                      )}
-                    </div>
+                    ))}
                   </div>
                 ))}
               </div>
@@ -628,24 +522,15 @@ export default function Home() {
           </section>
         )}
 
-        {/* ================================================= */}
         {/* PIE */}
-        {/* ================================================= */}
-
-        <footer className="mt-2 bg-[#174f3d] px-5 py-7 text-center">
-
+        <footer className="bg-[#174f3d] px-5 py-6 text-center">
           <div className="mb-3 flex items-center justify-center gap-3">
-
             <div className="h-px w-12 bg-[#c4932f]" />
-
-            <span className="text-[#c4932f]">
-              ✦
-            </span>
-
+            <span className="text-[#c4932f]">✦</span>
             <div className="h-px w-12 bg-[#c4932f]" />
           </div>
 
-          <p className="font-serif text-base font-semibold italic text-[#f8f3e8]">
+          <p className="font-serif text-sm font-semibold italic text-[#f8f3e8]">
             Gracias por mantener nuestro estándar de excelencia.
           </p>
         </footer>
