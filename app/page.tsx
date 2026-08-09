@@ -316,7 +316,7 @@ export default function Home() {
                 </label>
 
                 <input
-                  type="date"
+                 type="date"
                   value={fecha}
                   onChange={(e) => setFecha(e.target.value)}
                   className="
