@@ -277,17 +277,14 @@ export default function Home() {
 
                 <div className="relative h-[54px] w-full overflow-hidden rounded-2xl border border-[#d8d2c7] bg-[#fffdf9]">
 
-                  {/* FECHA CENTRADA */}
                   <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-12 text-center text-base font-medium text-gray-900">
                     {mostrarFecha(fecha)}
                   </div>
 
-                  {/* ICONO */}
                   <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-lg text-gray-600">
                     ▣
                   </div>
 
-                  {/* INPUT REAL INVISIBLE */}
                   <input
                     type="date"
                     value={fecha}
@@ -308,10 +305,15 @@ export default function Home() {
                   <select
                     value={villa}
                     onChange={(e) => setVilla(e.target.value)}
-                    className="h-[54px] w-full rounded-2xl border border-[#d8d2c7] bg-[#fffdf9] px-3 text-center text-base outline-none"
+                    className="h-[54px] w-full rounded-2xl border border-[#d8d2c7] bg-[#fffdf9] px-3 text-center text-base font-medium text-black opacity-100 outline-none"
+                    style={{ color: "#111111", WebkitTextFillColor: "#111111" }}
                   >
                     {villas.map((item) => (
-                      <option key={item} value={item}>
+                      <option
+                        key={item}
+                        value={item}
+                        style={{ color: "#111111" }}
+                      >
                         {item}
                       </option>
                     ))}
@@ -326,10 +328,22 @@ export default function Home() {
                   <select
                     value={colaborador}
                     onChange={(e) => setColaborador(e.target.value)}
-                    className="h-[54px] w-full rounded-2xl border border-[#d8d2c7] bg-[#fffdf9] px-3 text-center text-base outline-none"
+                    className="h-[54px] w-full rounded-2xl border border-[#d8d2c7] bg-[#fffdf9] px-3 text-center text-base font-medium text-black opacity-100 outline-none"
+                    style={{ color: "#111111", WebkitTextFillColor: "#111111" }}
                   >
-                    <option value="Katherine">Katherine</option>
-                    <option value="Laura">Laura</option>
+                    <option
+                      value="Katherine"
+                      style={{ color: "#111111" }}
+                    >
+                      Katherine
+                    </option>
+
+                    <option
+                      value="Laura"
+                      style={{ color: "#111111" }}
+                    >
+                      Laura
+                    </option>
                   </select>
                 </div>
               </div>
@@ -344,12 +358,22 @@ export default function Home() {
                   <select
                     value={producto}
                     onChange={(e) => setProducto(e.target.value)}
-                    className="h-[54px] w-full rounded-2xl border border-[#d8d2c7] bg-[#fffdf9] px-3 text-center text-base outline-none"
+                    className="h-[54px] w-full rounded-2xl border border-[#d8d2c7] bg-[#fffdf9] px-3 text-center text-base font-medium text-black opacity-100 outline-none"
+                    style={{ color: "#111111", WebkitTextFillColor: "#111111" }}
                   >
-                    <option value="">Seleccionar producto</option>
+                    <option
+                      value=""
+                      style={{ color: "#111111" }}
+                    >
+                      Seleccionar producto
+                    </option>
 
                     {productos.map((item) => (
-                      <option key={item} value={item}>
+                      <option
+                        key={item}
+                        value={item}
+                        style={{ color: "#111111" }}
+                      >
                         {item}
                       </option>
                     ))}
